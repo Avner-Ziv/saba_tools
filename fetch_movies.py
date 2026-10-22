@@ -25,17 +25,23 @@ def fetch_movies():
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         
-        # טעינת הדף והמתנה לטעינת ה-JavaScript המלאה
+        print("Opening Haifa Cinematheque website...")
         page.goto(URL, wait_until="networkidle", timeout=60000)
-        page.wait_for_timeout(4000) # המתנה לטעינת גריד הסרטים
-        
-        # שליפת כל האלמנטים המכילים סרטים בגריד
+        page.wait_for_timeout(3000)
+
+        # גלילה למטה 4 פעמים כדי לטעון את כל הסרטים הדינמיים (Infinite Scroll)
+        for i in range(4):
+            page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+            page.wait_for_timeout(1500)
+
+        # שליפת כל כרטיסי הסרטים
         cards = page.query_selector_all("div, article, a")
+        print(f"Found {len(cards)} elements on page. Processing...")
         
         for card in cards:
             text = card.inner_text().strip()
             
-            # חיפוש התבנית המדויקת שמופיעה בתמונות: "HH:MM DD.MM.YY , שם אולם"
+            # תבנית תאריך, שעה ואולם
             match = re.search(r'(\d{1,2}:\d{2})\s+(\d{1,2}\.\d{1,2}\.\d{2,4})\s*,\s*([^0-9\n\r]+)', text)
             
             if match:
@@ -43,17 +49,15 @@ def fetch_movies():
                 date_raw = match.group(2)
                 hall_raw = match.group(3).strip()
                 
-                # חילוץ הטקסט שקודם לזמן - שם הסרט
                 title_part = text[:match.start()].strip()
                 lines = [l.strip() for l in title_part.split('\n') if l.strip()]
                 
                 if not lines:
                     continue
                 
-                title = lines[-1] # השורה האחרונה לפני הזמן היא שם הסרט
+                title = lines[-1]
                 title = re.sub(r'[*]', '', title).strip()
                 
-                # ניקוי מילות מערכת/נגישות
                 if len(title) < 2 or any(ignore in title for ignore in ["הגעת", "דילוג", "אנטר", "נגישות", "תפריט", "כרטיסים"]):
                     continue
 
@@ -61,7 +65,6 @@ def fetch_movies():
                 date_display = f"{day_prefix}, {date_raw}" if day_prefix else date_raw
                 hall_str = "רפפורט" if "רפפורט" in hall_raw or "רפפורט" in title else "סינמטק"
 
-                # מניעת כפילויות
                 if not any(m['title'] == title and m['time'] == time_str and m['date'] == date_display for m in movies):
                     movies.append({
                         "title": title,
@@ -73,7 +76,11 @@ def fetch_movies():
 
         browser.close()
 
-    # נשמור אך ורק את הנתונים המציאותיים שנשלפו! ללא שום נתוני גיבוי מוכתבים
+    print(f"\nSUCCESS: Extracted {len(movies)} REAL movies from site:")
+    for idx, m in enumerate(movies, 1):
+        print(f"{idx}. {m['title']} | {m['date']} | {m['time']} | {m['hall']}")
+
+    # שמירה נקייה לחלוטין בלבד - ללא שום נתוני גיבוי!
     with open('movies.json', 'w', encoding='utf-8') as f:
         json.dump(movies, f, ensure_ascii=False, indent=2)
 
