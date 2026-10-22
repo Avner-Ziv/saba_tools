@@ -29,36 +29,41 @@ def fetch_movies():
         page.goto(URL, wait_until="networkidle", timeout=60000)
         page.wait_for_timeout(3000)
 
-        # גלילה למטה 4 פעמים כדי לטעון את כל הסרטים הדינמיים (Infinite Scroll)
+        # גלילה למטה לטעינת כל הסרטים
         for i in range(4):
             page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
             page.wait_for_timeout(1500)
 
-        # שליפת כל כרטיסי הסרטים
+        # שליפת כל הכרטיסיות
         cards = page.query_selector_all("div, article, a")
-        print(f"Found {len(cards)} elements on page. Processing...")
+        print(f"Total candidate elements found: {len(cards)}")
         
         for card in cards:
-            text = card.inner_text().strip()
+            raw_text = card.inner_text().strip()
+            # איחוד ירידות שורה ורווחים מיותרים
+            normalized_text = " ".join(raw_text.split())
             
-            # תבנית תאריך, שעה ואולם
-            match = re.search(r'(\d{1,2}:\d{2})\s+(\d{1,2}\.\d{1,2}\.\d{2,4})\s*,\s*([^0-9\n\r]+)', text)
+            # ביטוי סדיר גמיש לזיהוי: HH:MM DD.MM.YY , אולם
+            match = re.search(r'(\d{1,2}:\d{2})\s+(\d{1,2}\.\d{1,2}\.\d{2,4})\s*,\s*([^0-9]+)', normalized_text)
             
             if match:
                 time_str = match.group(1)
                 date_raw = match.group(2)
                 hall_raw = match.group(3).strip()
                 
-                title_part = text[:match.start()].strip()
-                lines = [l.strip() for l in title_part.split('\n') if l.strip()]
+                # חילוץ שם הסרט המופיע לפני התאריך
+                title_part = normalized_text[:match.start()].strip()
+                lines = [l.strip() for l in title_part.split() if l.strip()]
                 
                 if not lines:
                     continue
                 
-                title = lines[-1]
+                # לקחת את שם הסרט הנקי (עד 6 מילים)
+                title = " ".join(lines[-6:])
                 title = re.sub(r'[*]', '', title).strip()
                 
-                if len(title) < 2 or any(ignore in title for ignore in ["הגעת", "דילוג", "אנטר", "נגישות", "תפריט", "כרטיסים"]):
+                # סינון כותרות נגישות ומערכת
+                if len(title) < 2 or any(ignore in title for ignore in ["הגעת", "דילוג", "אנטר", "נגישות", "תפריט", "כרטיסים", "אירועי", "סרטי"]):
                     continue
 
                 day_prefix = get_day_name(date_raw)
@@ -76,11 +81,13 @@ def fetch_movies():
 
         browser.close()
 
-    print(f"\nSUCCESS: Extracted {len(movies)} REAL movies from site:")
+    print(f"\n==========================================")
+    print(f"SUCCESS: Extracted {len(movies)} REAL movies:")
     for idx, m in enumerate(movies, 1):
         print(f"{idx}. {m['title']} | {m['date']} | {m['time']} | {m['hall']}")
+    print(f"==========================================\n")
 
-    # שמירה נקייה לחלוטין בלבד - ללא שום נתוני גיבוי!
+    # שמירת נתוני האמת בלבד
     with open('movies.json', 'w', encoding='utf-8') as f:
         json.dump(movies, f, ensure_ascii=False, indent=2)
 
