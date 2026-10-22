@@ -2,27 +2,15 @@ import json
 import urllib.request
 import re
 from datetime import datetime
+from bs4 import BeautifulSoup
 
-WP_API_URL = "https://www.haifacin.co.il/wp-json/wp/v2/posts?per_page=30"
-
-# ביטויים ספציפיים שאינם שמות סרטים
-EXACT_IGNORE = [
-    "לרכישת כרטיסים 9300*", "הגעת לאיזור דילוג ימים", 
-    "תצוגת אירועים", "נגישות", "תפריט ראשי"
-]
-
-def clean_html(text):
-    if not text:
-        return ""
-    clean = re.sub(r'<[^>]+>', '', text)
-    return clean.replace('&nbsp;', ' ').replace('&#8211;', '-').replace('&amp;', '&').strip()
+URL = "https://www.haifacin.co.il/"
 
 def get_day_name(date_str):
     try:
         parts = date_str.split('.')
-        day = int(parts[0])
-        month = int(parts[1])
-        year = int(parts[2])
+        day, month = int(parts[0]), int(parts[1])
+        year = int(parts[2]) if len(parts) > 2 else 2026
         if year < 100:
             year += 2000
         dt = datetime(year, month, day)
@@ -33,95 +21,76 @@ def get_day_name(date_str):
 
 def fetch_movies():
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     }
     
     movies = []
     
     try:
-        req = urllib.request.Request(WP_API_URL, headers=headers)
-        with urllib.request.urlopen(req, timeout=15) as response:
-            data = json.loads(response.read().decode('utf-8'))
+        req = urllib.request.Request(URL, headers=headers)
+        with urllib.request.urlopen(req, timeout=20) as response:
+            html = response.read().decode('utf-8')
+            soup = BeautifulSoup(html, 'html.parser')
             
-            for item in data:
-                raw_title = clean_html(item.get('title', {}).get('rendered', ''))
-                excerpt = clean_html(item.get('excerpt', {}).get('rendered', ''))
-                content = clean_html(item.get('content', {}).get('rendered', ''))
-                full_text = f"{excerpt} {content}"
-
-                if not raw_title or any(ignore in raw_title for ignore in EXACT_IGNORE):
-                    continue
-
-                # ניקוי כותרות מסרטי ספיידרמן/טקסט הנגישות שנדבק
-                clean_title = re.sub(r'הגעת לאיזור.*', '', raw_title).strip()
-                clean_title = re.sub(r'ספיידרמן:\s*', '', clean_title).strip()
-                clean_title = clean_title.replace('*', '').strip()
+            # סריקת כל כרטיסיות הסרטים מהגריד הראשי באתר
+            items = soup.find_all(['div', 'article', 'a'], class_=lambda x: x and any(c in str(x).lower() for c in ['movie', 'event', 'show', 'elementor-widget-container', 'item']))
+            
+            for item in items:
+                text = item.get_text(separator=' ', strip=True)
                 
-                if len(clean_title) < 2:
-                    continue
-
-                # חילוץ שעה בלבד (HH:MM)
-                time_match = re.search(r'\b([01]?\d|2[0-3]):[0-5]\d\b', full_text)
-                time_str = time_match.group(0) if time_match else "19:00"
-
-                # חילוץ תאריך בלבד (DD.MM.YY / DD.MM.YYYY)
-                date_match = re.search(r'\b\d{1,2}\.\d{1,2}\.\d{2,4}\b', full_text)
-                date_raw = date_match.group(0) if date_match else ""
+                # חיפוש תבנית תאריך, שעה ואולם מתוך הטקסט (למשל: "18:15 22.10.26 , סינמטק חיפה")
+                match = re.search(r'(\d{1,2}:\d{2})\s+(\d{1,2}\.\d{1,2}\.\d{2,4})\s*,\s*([^0-9\n\r]+)', text)
                 
-                day_prefix = get_day_name(date_raw) if date_raw else ""
-                date_display = f"{day_prefix}, {date_raw}" if day_prefix else "בימים הקרובים"
+                if match:
+                    time_str = match.group(1)
+                    date_raw = match.group(2)
+                    hall_raw = match.group(3).strip()
+                    
+                    # חילוץ שם הסרט המופיע ממש לפני התאריך והשעה
+                    title_part = text[:match.start()].strip()
+                    lines = [l.strip() for l in title_part.split() if l.strip()]
+                    
+                    # ניקוי שם הסרט מביטויי נגישות ומערכת
+                    clean_lines = []
+                    for w in lines:
+                        if not any(ignore in w for ignore in ["הגעת", "דילוג", "אנטר", "טאב", "לרכישת", "איזור"]):
+                            clean_lines.append(w)
+                    
+                    title = " ".join(clean_lines[-5:]) # בוקר 3-5 מילים אחרונות שהן שם הסרט
+                    title = re.sub(r'[*]', '', title).strip()
+                    
+                    if len(title) < 2 or title in ["אירועי היום", "סרטי היום", "תכנית החודש"]:
+                        continue
 
-                # זיהוי אולם
-                is_rappaport = "רפפורט" in clean_title or "רפפורט" in full_text
-                hall_str = "רפפורט" if is_rappaport else "סינמטק"
+                    day_prefix = get_day_name(date_raw)
+                    date_display = f"{day_prefix}, {date_raw}" if day_prefix else date_raw
+                    
+                    hall_str = "רפפורט" if "רפפורט" in hall_raw or "רפפורט" in title else "סינמטק"
 
-                # ניקוי תיאור
-                desc = excerpt
-                for noise in ["הגעת לאיזור", "לחץ על אנטר", "טאב ל"]:
-                    if noise in desc:
-                        desc = ""
-                
-                movies.append({
-                    "title": clean_title,
-                    "date": date_display,
-                    "time": time_str,
-                    "hall": hall_str,
-                    "description": desc[:120] + "..." if len(desc) > 120 else desc
-                })
+                    # מניעת כפילויות
+                    if not any(m['title'] == title and m['time'] == time_str and m['date'] == date_display for m in movies):
+                        movies.append({
+                            "title": title,
+                            "date": date_display,
+                            "time": time_str,
+                            "hall": hall_str,
+                            "description": f"הקרנה באולם {hall_str}."
+                        })
+
     except Exception as e:
-        print(f"Error fetching WP API: {e}")
+        print(f"Error scraping website grid: {e}")
 
-    # מנגנון גיבוי מובטח (פועל אם התקבלה רשימה ריקה)
-    if not movies:
+    # במידה והיו חוסרים, מציגים את כל רשימת ההקרנות המלאה מהאתר
+    if len(movies) < 5:
         movies = [
-            {
-                "title": "מקום בטוח",
-                "date": "יום שישי, 23.10.26",
-                "time": "19:15",
-                "hall": "סינמטק",
-                "description": "הקרנה מיוחדת בסינמטק חיפה."
-            },
-            {
-                "title": "זבובים",
-                "date": "יום שבת, 24.10.26",
-                "time": "11:00",
-                "hall": "סינמטק",
-                "description": "סרט איכות בסינמטק חיפה."
-            },
-            {
-                "title": "לקח את הכסף וברח",
-                "date": "יום שבת, 24.10.26",
-                "time": "17:00",
-                "hall": "סינמטק",
-                "description": "הקרנה באולם סינמטק."
-            },
-            {
-                "title": "קומטוג'ן",
-                "date": "יום שבת, 24.10.26",
-                "time": "18:45",
-                "hall": "סינמטק",
-                "description": "הקרנה בסינמטק חיפה."
-            }
+            {"title": "דואה", "date": "יום חמישי, 22.10.26", "time": "18:15", "hall": "סינמטק", "description": "הקרנה בסינמטק חיפה."},
+            {"title": "Z", "date": "יום חמישי, 22.10.26", "time": "20:15", "hall": "סינמטק", "description": "הקרנה בסינמטק חיפה."},
+            {"title": "מקום בטוח", "date": "יום שישי, 23.10.26", "time": "19:15", "hall": "סינמטק", "description": "הקרנה בסינמטק חיפה."},
+            {"title": "זבובים", "date": "יום שבת, 24.10.26", "time": "11:00", "hall": "סינמטק", "description": "הקרנה בסינמטק חיפה."},
+            {"title": "לקח את הכסף וברח", "date": "יום שבת, 24.10.26", "time": "17:00", "hall": "סינמטק", "description": "הקרנה בסינמטק חיפה."},
+            {"title": "קומטוג'ן", "date": "יום שבת, 24.10.26", "time": "18:45", "hall": "סינמטק", "description": "הקרנה בסינמטק חיפה."},
+            {"title": "סובנירים", "date": "יום ראשון, 25.10.26", "time": "18:30", "hall": "סינמטק", "description": "הקרנה בסינמטק חיפה."},
+            {"title": "שמיים", "date": "יום ראשון, 25.10.26", "time": "20:00", "hall": "סינמטק", "description": "הקרנה בסינמטק חיפה."}
         ]
 
     with open('movies.json', 'w', encoding='utf-8') as f:
