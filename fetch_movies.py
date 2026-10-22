@@ -1,50 +1,82 @@
 import json
 import urllib.request
-from bs4 import BeautifulSoup
+import re
+from datetime import datetime
 
-URL = "https://www.haifacin.co.il/"
+# פנייה ל-API הנתונים של סינמטק חיפה
+API_URL = "https://www.haifacin.co.il/api/events/getEvents"
+
+def get_day_name(date_str):
+    days = ["שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת", "ראשון"]
+    try:
+        dt = datetime.strptime(date_str, "%Y-%m-%d")
+        return days[dt.weekday()]
+    except:
+        return ""
 
 def fetch_movies():
-    req = urllib.request.Request(
-        URL, 
-        headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-    )
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Accept': 'application/json'
+    }
     
     movies = []
+    
     try:
-        html = urllib.request.urlopen(req).read().decode('utf-8')
-        soup = BeautifulSoup(html, 'html.parser')
-        
-        # סריקת אלמנטי הסרטים באתר הסינמטק
-        cards = soup.find_all(['div', 'article'], class_=lambda x: x and ('movie' in x.lower() or 'event' in x.lower() or 'show' in x.lower()))
-        
-        for card in cards:
-            title_el = card.find(['h2', 'h3', 'h4', 'a', 'span'], class_=lambda x: x and 'title' in x.lower())
-            time_el = card.find(['span', 'div', 'time'], class_=lambda x: x and ('time' in x.lower() or 'date' in x.lower()))
-            hall_el = card.find(['span', 'div'], class_=lambda x: x and ('hall' in x.lower() or 'location' in x.lower() or 'venue' in x.lower()))
+        req = urllib.request.Request(API_URL, headers=headers)
+        with urllib.request.urlopen(req) as response:
+            data = json.loads(response.read().decode('utf-8'))
             
-            if title_el:
-                title = title_el.get_text(strip=True)
-                time_str = time_el.get_text(strip=True) if time_el else "לפי לוח ההקרנות"
-                hall_str = hall_el.get_text(strip=True) if hall_el else "סינמטק"
+            events = data if isinstance(data, list) else data.get('events', data.get('data', []))
+            
+            for item in events:
+                title = item.get('title') or item.get('name') or item.get('event_name')
+                if not title:
+                    continue
+
+                date_raw = item.get('date') or item.get('start_date') or ""
+                time_str = item.get('time') or item.get('start_time') or ""
+                hall_str = item.get('hall') or item.get('venue') or item.get('location') or "סינמטק"
+                description = item.get('short_description') or item.get('description') or item.get('summary') or ""
                 
+                # ניקוי תגיות HTML מהתיאור
+                description = re.sub(r'<[^>]+>', '', description).strip()
+                if len(description) > 100:
+                    description = description[:97] + "..."
+
+                # הפקת יום בשבוע
+                day_name = get_day_name(date_raw) if date_raw else ""
+                date_display = f"יום {day_name}, {date_raw}" if day_name else date_raw
+
                 movies.append({
-                    "title": title,
-                    "date": "בימים הקרובים",
-                    "time": time_str,
-                    "hall": hall_str
+                    "title": title.strip(),
+                    "date": date_display if date_display else "בימים הקרובים",
+                    "time": time_str if time_str else "לפי לוח ההקרנות",
+                    "hall": hall_str,
+                    "description": description
                 })
     except Exception as e:
-        print(f"Error scraping: {e}")
+        print(f"Direct API Fetching Error: {e}")
 
-    # אם לא חולצו סרטים עקב שינוי במבנה ה-HTML של האתר, מייצרים נתוני ברירת מחדל עדכון
+    # אם הפנייה ל-API חסומה, מתבצעת סריקה חלופית מדף הבית
     if not movies:
-        movies = [
-            {"title": "הקרנות יומיומיות - סינמטק חיפה", "date": "היום", "time": "19:00", "hall": "סינמטק"},
-            {"title": "סרט איכות - אולם רפפורט", "date": "מחר", "time": "20:30", "hall": "רפפורט"}
-        ]
+        try:
+            req_html = urllib.request.Request("https://www.haifacin.co.il/", headers=headers)
+            with urllib.request.urlopen(req_html) as res:
+                html = res.read().decode('utf-8')
+                # חילוץ נתונים מובנים מקוד המקור של הדף
+                matches = re.findall(r'"title":\s*"([^"]+)".*?"date":\s*"([^"]+)".*?"time":\s*"([^"]+)"', html)
+                for title, date_str, time_str in matches[:15]:
+                    movies.append({
+                        "title": title,
+                        "date": date_str,
+                        "time": time_str,
+                        "hall": "סינמטק",
+                        "description": ""
+                    })
+        except Exception as ex:
+            print(f"Fallback Error: {ex}")
 
-    # שמירת התוצאה לקובץ JSON
     with open('movies.json', 'w', encoding='utf-8') as f:
         json.dump(movies, f, ensure_ascii=False, indent=2)
 
