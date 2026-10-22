@@ -54,61 +54,60 @@
 
   <h1>🎬 הזמנת סרט לסינמטק</h1>
   <div id="movies-container">
-    <p style="text-align: center; font-size: 20px;">טוען סרטים...</p>
+    <p style="text-align: center; font-size: 20px;">טוען סרטים מסינמטק חיפה...</p>
   </div>
 
   <script>
     const USER_NAME = "אלי זיו";
     const PHONE_NUMBER = "972525559300";
 
-    const movies = [
-      {
-        title: "סרט לדוגמה 1",
-        date: "היום",
-        time: "19:30",
-        hall: "סינמטק",
-        row: "4",
-        seats: "17-18"
-      },
-      {
-        title: "סרט לדוגמה 2",
-        date: "מחר",
-        time: "20:00",
-        hall: "רפפורט",
-        row: "7",
-        seats: "24-25"
-      }
-    ];
-
-    function renderMovies() {
+    async function loadMovies() {
       const container = document.getElementById('movies-container');
-      container.innerHTML = '';
+      try {
+        // טעינת הנתונים שהסקריפט מייצר
+        const response = await fetch('movies.json?t=' + new Date().getTime());
+        const movies = await response.json();
 
-      movies.forEach(movie => {
-        const message = `שלום, אשמח להזמין מקום (כרטיס זוגי):
+        if (!movies || movies.length === 0) {
+          container.innerHTML = '<p style="text-align:center; font-size:20px;">לא נמצאו הקרנות קרובות כרגע.</p>';
+          return;
+        }
+
+        container.innerHTML = '';
+        movies.forEach(movie => {
+          // קביעת מיקומים לפי האולם
+          const isRappaport = movie.hall && movie.hall.includes("רפפורט");
+          const row = isRappaport ? "7" : "4";
+          const seats = isRappaport ? "24-25" : "17-18";
+          const hallName = isRappaport ? "רפפורט" : "סינמטק";
+
+          const message = `שלום, אשמח להזמין מקום (כרטיס זוגי):
 - מזמין: ${USER_NAME}
 - שם הסרט: ${movie.title}
 - תאריך ושעה: ${movie.date}, ${movie.time}
-- אולם: ${movie.hall}
-- מקומות מבוקשים: שורה ${movie.row}, כיסאות ${movie.seats} (או בסמוך אליהם)
+- אולם: ${hallName}
+- מקומות מבוקשים: שורה ${row}, כיסאות ${seats} (או בסמוך אליהם)
 
 תודה!`;
 
-        const waLink = `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(message)}`;
+          const waLink = `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(message)}`;
 
-        const card = document.createElement('div');
-        card.className = 'movie-card';
-        card.innerHTML = `
-          <div class="movie-title">${movie.title}</div>
-          <div class="movie-info">📅 ${movie.date} | ⏰ ${movie.time}</div>
-          <div class="movie-info">🏛️ אולם: ${movie.hall} (שורה ${movie.row})</div>
-          <a class="btn-order" href="${waLink}" target="_blank">📲 שלח הזמנה ב-WhatsApp</a>
-        `;
-        container.appendChild(card);
-      });
+          const card = document.createElement('div');
+          card.className = 'movie-card';
+          card.innerHTML = `
+            <div class="movie-title">${movie.title}</div>
+            <div class="movie-info">📅 ${movie.date} | ⏰ ${movie.time}</div>
+            <div class="movie-info">🏛️ אולם: ${hallName} (שורה ${row})</div>
+            <a class="btn-order" href="${waLink}" target="_blank">📲 שלח הזמנה ב-WhatsApp</a>
+          `;
+          container.appendChild(card);
+        });
+      } catch (err) {
+        container.innerHTML = '<p style="text-align:center; font-size:20px;">טוען את לוח ההקרנות... (אנא רענן עוד דקה)</p>';
+      }
     }
 
-    renderMovies();
+    loadMovies();
   </script>
 </body>
 </html>
