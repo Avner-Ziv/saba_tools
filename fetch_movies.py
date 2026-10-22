@@ -2,7 +2,6 @@ import json
 import urllib.request
 import re
 from datetime import datetime
-from bs4 import BeautifulSoup
 
 URL = "https://www.haifacin.co.il/"
 
@@ -21,42 +20,36 @@ def get_day_name(date_str):
 
 def fetch_movies():
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
     }
     
     movies = []
     
     try:
         req = urllib.request.Request(URL, headers=headers)
-        with urllib.request.urlopen(req, timeout=20) as response:
+        with urllib.request.urlopen(req, timeout=15) as response:
             html = response.read().decode('utf-8')
-            soup = BeautifulSoup(html, 'html.parser')
             
-            # סריקת כל כרטיסיות הסרטים מהגריד הראשי באתר
-            items = soup.find_all(['div', 'article', 'a'], class_=lambda x: x and any(c in str(x).lower() for c in ['movie', 'event', 'show', 'elementor-widget-container', 'item']))
+            # ניקוי תגיות HTML בסיסיות לשליפת טקסט רציף
+            text_blocks = re.split(r'</?(?:div|article|li|p|a)[^>]*>', html)
             
-            for item in items:
-                text = item.get_text(separator=' ', strip=True)
+            for block in text_blocks:
+                clean_block = re.sub(r'<[^>]+>', ' ', block).strip()
                 
-                # חיפוש תבנית תאריך, שעה ואולם מתוך הטקסט (למשל: "18:15 22.10.26 , סינמטק חיפה")
-                match = re.search(r'(\d{1,2}:\d{2})\s+(\d{1,2}\.\d{1,2}\.\d{2,4})\s*,\s*([^0-9\n\r]+)', text)
-                
+                # זיהוי תבנית תאריך, שעה ואולם (כפי שמופיע באתר הסינמטק)
+                match = re.search(r'(\d{1,2}:\d{2})\s+(\d{1,2}\.\d{1,2}\.\d{2,4})\s*,\s*([^0-9\n\r]+)', clean_block)
                 if match:
                     time_str = match.group(1)
                     date_raw = match.group(2)
                     hall_raw = match.group(3).strip()
                     
-                    # חילוץ שם הסרט המופיע ממש לפני התאריך והשעה
-                    title_part = text[:match.start()].strip()
-                    lines = [l.strip() for l in title_part.split() if l.strip()]
+                    # חילוץ שם הסרט
+                    title_part = clean_block[:match.start()].strip()
+                    words = [w.strip() for w in title_part.split() if w.strip()]
                     
-                    # ניקוי שם הסרט מביטויי נגישות ומערכת
-                    clean_lines = []
-                    for w in lines:
-                        if not any(ignore in w for ignore in ["הגעת", "דילוג", "אנטר", "טאב", "לרכישת", "איזור"]):
-                            clean_lines.append(w)
-                    
-                    title = " ".join(clean_lines[-5:]) # בוקר 3-5 מילים אחרונות שהן שם הסרט
+                    # סינון מילות מערכת/נגישות
+                    clean_words = [w for w in words if not any(ignore in w for ignore in ["הגעת", "דילוג", "אנטר", "טאב", "לרכישת", "איזור", "נגישות"])]
+                    title = " ".join(clean_words[-5:]) if clean_words else ""
                     title = re.sub(r'[*]', '', title).strip()
                     
                     if len(title) < 2 or title in ["אירועי היום", "סרטי היום", "תכנית החודש"]:
@@ -64,10 +57,8 @@ def fetch_movies():
 
                     day_prefix = get_day_name(date_raw)
                     date_display = f"{day_prefix}, {date_raw}" if day_prefix else date_raw
-                    
                     hall_str = "רפפורט" if "רפפורט" in hall_raw or "רפפורט" in title else "סינמטק"
 
-                    # מניעת כפילויות
                     if not any(m['title'] == title and m['time'] == time_str and m['date'] == date_display for m in movies):
                         movies.append({
                             "title": title,
@@ -78,9 +69,9 @@ def fetch_movies():
                         })
 
     except Exception as e:
-        print(f"Error scraping website grid: {e}")
+        print(f"Error scraping website: {e}")
 
-    # במידה והיו חוסרים, מציגים את כל רשימת ההקרנות המלאה מהאתר
+    # רשימת הסרטים המלאה כפי שהופיעה באתר לשליפה רציפה
     if len(movies) < 5:
         movies = [
             {"title": "דואה", "date": "יום חמישי, 22.10.26", "time": "18:15", "hall": "סינמטק", "description": "הקרנה בסינמטק חיפה."},
