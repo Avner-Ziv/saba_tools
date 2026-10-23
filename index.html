@@ -3,133 +3,273 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>הזמנת סרט - סינמטק חיפה</title>
+  <title>הזמנת סרט</title>
+  <meta name="application-name" content="הזמנת סרט">
+  <meta name="apple-mobile-web-app-title" content="הזמנת סרט">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#1f3a5f">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <style>
+    :root {
+      --bg: #f4f4f9;
+      --card: #ffffff;
+      --text: #111111;
+      --muted: #444444;
+      --accent: #1f3a5f;
+      --cinematheque: #007bff;
+      --rappaport: #e67e22;
+      --other: #888888;
+      --wa: #1da851;
+    }
+    * { box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f4f4f9;
+      font-family: Arial, 'Segoe UI', Tahoma, sans-serif;
+      background: var(--bg);
+      color: var(--text);
       margin: 0;
       padding: 16px;
-      direction: rtl;
+      line-height: 1.4;
     }
+    main { max-width: 640px; margin: 0 auto; }
     h1 {
       text-align: center;
-      color: #333;
-      font-size: 28px;
-      margin-bottom: 20px;
+      font-size: 30px;
+      margin: 4px 0 6px;
+    }
+    .updated {
+      text-align: center;
+      font-size: 16px;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+    .warning {
+      background: #fff3cd;
+      border: 2px solid #e0b100;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 18px;
+      margin-bottom: 18px;
+    }
+    .day-header {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: var(--accent);
+      color: #fff;
+      font-size: 22px;
+      font-weight: bold;
+      padding: 10px 14px;
+      border-radius: 10px;
+      margin: 26px 0 12px;
+    }
+    .day-header .tag {
+      background: #ffd54a;
+      color: #222;
+      border-radius: 6px;
+      padding: 1px 8px;
+      margin-inline-start: 8px;
+      font-size: 18px;
     }
     .movie-card {
-      background: white;
+      background: var(--card);
       border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 18px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-      border-right: 6px solid #007bff;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+      border-right: 8px solid var(--cinematheque);
     }
-    .movie-card.rappaport {
-      border-right-color: #e67e22; /* צבע מובלט לאולם רפפורט */
+    .movie-card.rappaport { border-right-color: var(--rappaport); }
+    .movie-card.other { border-right-color: var(--other); }
+    .movie-time {
+      font-size: 26px;
+      font-weight: bold;
+      color: var(--accent);
     }
     .movie-title {
-      font-size: 24px;
+      font-size: 25px;
       font-weight: bold;
-      color: #111;
-      margin-bottom: 10px;
+      margin: 4px 0 10px;
     }
     .movie-info {
       font-size: 19px;
-      color: #333;
       margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    }
+    .movie-meta {
+      font-size: 17px;
+      color: var(--muted);
+      margin-bottom: 6px;
     }
     .movie-desc {
-      font-size: 16px;
-      color: #555;
-      margin-top: 10px;
-      margin-bottom: 14px;
-      line-height: 1.4;
-      background: #f8f9fa;
+      font-size: 17px;
+      color: #333;
+      background: #f3f4f6;
       padding: 10px 14px;
       border-radius: 8px;
+      margin: 10px 0 12px;
     }
     .btn-order {
       display: block;
       width: 100%;
-      background-color: #25D366;
-      color: white;
+      background: var(--wa);
+      color: #fff;
       text-align: center;
-      padding: 14px 0;
-      font-size: 20px;
+      padding: 16px 0;
+      font-size: 21px;
       font-weight: bold;
-      border-radius: 8px;
+      border-radius: 10px;
       text-decoration: none;
-      margin-top: 10px;
+      margin-top: 8px;
+    }
+    .btn-order:active { filter: brightness(0.9); }
+    .message {
+      text-align: center;
+      font-size: 21px;
+      margin-top: 40px;
     }
   </style>
 </head>
 <body>
-
+<main>
   <h1>🎬 הזמנת סרט לסינמטק</h1>
+  <div class="updated" id="updated"></div>
   <div id="movies-container">
-    <p style="text-align: center; font-size: 20px;">טוען סרטים מסינמטק חיפה...</p>
+    <p class="message">טוען סרטים מסינמטק חיפה…</p>
   </div>
+</main>
 
-  <script>
-    const USER_NAME = "אלי זיו";
-    const PHONE_NUMBER = "972525559300";
+<script>
+  const USER_NAME = "אלי זיו";
+  const PHONE_NUMBER = "972525559300";
+  const STALE_AFTER_HOURS = 48;
 
-    async function loadMovies() {
-      const container = document.getElementById('movies-container');
-      try {
-        const response = await fetch('movies.json?t=' + new Date().getTime());
-        const movies = await response.json();
+  // מקומות קבועים לפי אולם
+  const HALLS = {
+    cinematheque: { name: "סינמטק", row: "4", seats: "17-18" },
+    rappaport:    { name: "רפפורט", row: "7", seats: "24-25" }
+  };
 
-        if (!movies || movies.length === 0) {
-          container.innerHTML = '<p style="text-align:center; font-size:20px;">לא נמצאו הקרנות קרובות כרגע.</p>';
-          return;
-        }
+  // יוצר אלמנט עם טקסט בלבד (בלי innerHTML, כדי שתווים מוזרים בשם סרט לא ישברו את הדף)
+  function el(tag, className, text) {
+    const e = document.createElement(tag);
+    if (className) e.className = className;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
 
-        container.innerHTML = '';
-        movies.forEach(movie => {
-          // בדיקת אולם והגדרת שורה וכיסאות
-          const isRappaport = movie.hall && movie.hall.includes("רפפורט");
-          const row = isRappaport ? "7" : "4";
-          const seats = isRappaport ? "24-25" : "17-18";
-          const hallName = isRappaport ? "רפפורט" : "סינמטק";
+  function dayKey(d) {
+    return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+  }
 
-          const message = `שלום, אשמח להזמין מקום (כרטיס זוגי):
-- מזמין: ${USER_NAME}
-- שם הסרט: ${movie.title}
-- תאריך ושעה: ${movie.date}, ${movie.time}
-- אולם: ${hallName}
-- מקומות מבוקשים: שורה ${row}, כיסאות ${seats} (או בסמוך אליהם)
+  function buildMessage(s, hall) {
+    const lines = [
+      "שלום, אשמח להזמין מקום (כרטיס זוגי):",
+      "- מזמין: " + USER_NAME,
+      "- שם הסרט: " + s.title,
+      "- תאריך ושעה: " + s.weekday + ", " + s.date + ", " + s.time
+    ];
+    if (hall) {
+      lines.push("- אולם: " + hall.name);
+      lines.push("- מקומות מבוקשים: שורה " + hall.row + ", כיסאות " + hall.seats + " (או בסמוך אליהם)");
+    } else {
+      lines.push("- אולם: " + s.hall_raw);
+    }
+    lines.push("", "תודה!");
+    return lines.join("\n");
+  }
 
-תודה!`;
+  function renderCard(s) {
+    const hall = HALLS[s.hall_key] || null;
+    const card = el("div", "movie-card " + (hall ? s.hall_key : "other"));
 
-          const waLink = `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(message)}`;
+    card.appendChild(el("div", "movie-time", "⏰ " + s.time));
+    card.appendChild(el("div", "movie-title", s.title));
 
-          const card = document.createElement('div');
-          card.className = `movie-card ${isRappaport ? 'rappaport' : ''}`;
-          
-          let descHtml = movie.description ? `<div class="movie-desc">📝 ${movie.description}</div>` : '';
+    const hallText = hall
+      ? "🏛️ אולם: " + hall.name + " (שורה " + hall.row + ", כיסאות " + hall.seats + ")"
+      : "🏛️ אולם: " + s.hall_raw;
+    card.appendChild(el("div", "movie-info", hallText));
 
-          card.innerHTML = `
-            <div class="movie-title">${movie.title}</div>
-            <div class="movie-info">📅 <b>תאריך:</b> ${movie.date}</div>
-            <div class="movie-info">⏰ <b>שעה:</b> ${movie.time}</div>
-            <div class="movie-info">🏛️ <b>אולם:</b> ${hallName} (שורה מועדפת: ${row}, כיסאות: ${seats})</div>
-            ${descHtml}
-            <a class="btn-order" href="${waLink}" target="_blank">📲 שלח הזמנה ב-WhatsApp</a>
-          `;
-          container.appendChild(card);
-        });
-      } catch (err) {
-        container.innerHTML = '<p style="text-align:center; font-size:20px;">טוען את לוח ההקרנות...</p>';
+    if (s.info) card.appendChild(el("div", "movie-meta", s.info));
+    if (s.synopsis) card.appendChild(el("div", "movie-desc", s.synopsis));
+
+    const link = el("a", "btn-order", "📲 שלח הזמנה ב-WhatsApp");
+    link.href = "https://wa.me/" + PHONE_NUMBER + "?text=" + encodeURIComponent(buildMessage(s, hall));
+    link.target = "_blank";
+    link.rel = "noopener";
+    card.appendChild(link);
+    return card;
+  }
+
+  function showMessage(container, text) {
+    container.replaceChildren(el("p", "message", text));
+  }
+
+  async function loadMovies() {
+    const container = document.getElementById("movies-container");
+    const updatedEl = document.getElementById("updated");
+
+    let data;
+    try {
+      const response = await fetch("movies.json?t=" + Date.now());
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      data = await response.json();
+    } catch (err) {
+      showMessage(container, "לא הצלחתי לטעון את רשימת הסרטים. נסה שוב בעוד כמה דקות.");
+      return;
+    }
+
+    // תמיכה גם בפורמט הישן (מערך פשוט)
+    const screenings = Array.isArray(data) ? data : (data.screenings || []);
+
+    if (data.updated_at) {
+      const updated = new Date(data.updated_at);
+      updatedEl.textContent = "הרשימה עודכנה: " +
+        updated.toLocaleDateString("he-IL") + " בשעה " +
+        updated.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
+
+      if ((Date.now() - updated.getTime()) / 36e5 > STALE_AFTER_HOURS) {
+        const warn = el("div", "warning",
+          "שים לב: הרשימה לא התעדכנה כבר כמה ימים. כדאי לוודא את המועד מול הסינמטק.");
+        updatedEl.after(warn);
       }
     }
 
-    loadMovies();
-  </script>
+    // מסננים הקרנות שכבר התחילו (הקובץ מתעדכן פעמיים ביום)
+    const now = Date.now();
+    const upcoming = screenings
+      .filter(s => !s.starts_at || new Date(s.starts_at).getTime() > now)
+      .sort((a, b) => (a.starts_at || "").localeCompare(b.starts_at || ""));
+
+    if (upcoming.length === 0) {
+      showMessage(container, "לא נמצאו הקרנות קרובות כרגע.");
+      return;
+    }
+
+    const today = new Date();
+    const tomorrow = new Date(today.getTime() + 864e5);
+    const todayKey = dayKey(today);
+    const tomorrowKey = dayKey(tomorrow);
+
+    container.replaceChildren();
+    let currentDay = null;
+    for (const s of upcoming) {
+      const d = s.starts_at ? new Date(s.starts_at) : null;
+      const key = d ? dayKey(d) : s.date;
+      if (key !== currentDay) {
+        currentDay = key;
+        const header = el("div", "day-header", s.weekday + ", " + s.date);
+        if (key === todayKey) header.appendChild(el("span", "tag", "היום"));
+        else if (key === tomorrowKey) header.appendChild(el("span", "tag", "מחר"));
+        container.appendChild(header);
+      }
+      container.appendChild(renderCard(s));
+    }
+  }
+
+  loadMovies();
+</script>
 </body>
 </html>
