@@ -1,0 +1,16 @@
+{
+  "id": "cinema-haifa",
+  "name": "סינמטק חיפה",
+  "title": "🎬 הזמנת סרט לסינמטק",
+  "icon": "🎬",
+  "data": "data/cinema-haifa.json",
+  "loadingText": "טוען סרטים מסינמטק חיפה…",
+  "config": {
+    "whatsapp": "972525559300",
+    "staleAfterHours": 48,
+    "halls": {
+      "cinematheque": { "name": "סינמטק" },
+      "rappaport": { "name": "רפפורט" }
+    }
+  }
+}

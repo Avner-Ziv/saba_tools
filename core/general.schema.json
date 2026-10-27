@@ -1,0 +1,23 @@
+{
+  "title": "הגדרות כלליות",
+  "fields": [
+    {
+      "key": "displayName",
+      "type": "text",
+      "label": "השם שלך",
+      "help": "השם הזה יופיע בהודעות ההזמנה",
+      "default": "אלי זיו"
+    },
+    {
+      "key": "fontSize",
+      "type": "choice",
+      "label": "גודל הטקסט",
+      "options": [
+        { "value": "normal", "label": "רגיל" },
+        { "value": "large", "label": "גדול" },
+        { "value": "xlarge", "label": "גדול מאוד" }
+      ],
+      "default": "normal"
+    }
+  ]
+}

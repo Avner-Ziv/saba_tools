@@ -19,51 +19,88 @@
       --text: #111111;
       --muted: #444444;
       --accent: #1f3a5f;
+      --accent-2: #2e5a88;
       --cinematheque: #007bff;
       --rappaport: #e67e22;
       --other: #888888;
       --wa: #1da851;
+      --line: #d5d9e0;
     }
+    html { font-size: 16px; }
     * { box-sizing: border-box; }
     body {
       font-family: Arial, 'Segoe UI', Tahoma, sans-serif;
       background: var(--bg);
       color: var(--text);
       margin: 0;
-      padding: 16px;
       line-height: 1.4;
     }
-    main { max-width: 640px; margin: 0 auto; }
-    h1 {
-      text-align: center;
-      font-size: 30px;
-      margin: 4px 0 6px;
+    #app { max-width: 640px; margin: 0 auto; padding: 0 1rem 2rem; }
+
+    /* פס עליון */
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.8rem 0 0.4rem;
     }
+    /* הכפתורים בשורה עליונה, הכותרת מתחתם ברוחב מלא */
+    .topbar-title {
+      order: 2;
+      flex: 1 0 100%;
+      font-size: 1.75rem;
+      margin: 0.2rem 0 0;
+      text-align: center;
+    }
+    .topbar-btn.settings { margin-inline-start: auto; }
+    .topbar-btn {
+      flex: none;
+      font-size: 1.05rem;
+      font-weight: bold;
+      color: var(--accent);
+      background: #fff;
+      border: 2px solid var(--accent);
+      border-radius: 10px;
+      padding: 0.45rem 0.7rem;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .content { padding-top: 0.3rem; }
+
     .updated {
       text-align: center;
-      font-size: 16px;
+      font-size: 1rem;
       color: var(--muted);
-      margin-bottom: 18px;
+      margin-bottom: 1rem;
     }
-    .warning {
-      background: #fff3cd;
-      border: 2px solid #e0b100;
+    .warning, .note {
       border-radius: 10px;
-      padding: 12px 14px;
-      font-size: 18px;
-      margin-bottom: 18px;
+      padding: 0.75rem 0.9rem;
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
     }
+    .warning { background: #fff3cd; border: 2px solid #e0b100; }
+    .note { background: #e8f0fb; border: 2px solid #a9c4ea; }
+    .note a { color: var(--accent); font-weight: bold; }
+    .message {
+      text-align: center;
+      font-size: 1.3rem;
+      margin-top: 2.5rem;
+    }
+
+    /* רשימת הקרנות */
     .day-header {
       position: sticky;
       top: 0;
       z-index: 1;
       background: var(--accent);
       color: #fff;
-      font-size: 22px;
+      font-size: 1.375rem;
       font-weight: bold;
-      padding: 10px 14px;
+      padding: 0.6rem 0.9rem;
       border-radius: 10px;
-      margin: 26px 0 12px;
+      margin: 1.6rem 0 0.75rem;
     }
     .day-header .tag {
       background: #ffd54a;
@@ -71,205 +108,139 @@
       border-radius: 6px;
       padding: 1px 8px;
       margin-inline-start: 8px;
-      font-size: 18px;
+      font-size: 1.1rem;
     }
     .movie-card {
       background: var(--card);
       border-radius: 12px;
-      padding: 18px;
-      margin-bottom: 16px;
+      padding: 1.1rem;
+      margin-bottom: 1rem;
       box-shadow: 0 3px 10px rgba(0,0,0,0.08);
       border-right: 8px solid var(--cinematheque);
     }
     .movie-card.rappaport { border-right-color: var(--rappaport); }
     .movie-card.other { border-right-color: var(--other); }
-    .movie-time {
-      font-size: 26px;
-      font-weight: bold;
-      color: var(--accent);
-    }
-    .movie-title {
-      font-size: 25px;
-      font-weight: bold;
-      margin: 4px 0 10px;
-    }
-    .movie-info {
-      font-size: 19px;
-      margin-bottom: 6px;
-    }
-    .movie-meta {
-      font-size: 17px;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
+    .movie-time { font-size: 1.6rem; font-weight: bold; color: var(--accent); }
+    .movie-title { font-size: 1.55rem; font-weight: bold; margin: 0.25rem 0 0.6rem; }
+    .movie-info { font-size: 1.2rem; margin-bottom: 0.4rem; }
+    .nowrap { white-space: nowrap; }
+    .movie-meta { font-size: 1.05rem; color: var(--muted); margin-bottom: 0.4rem; }
     .movie-desc {
-      font-size: 17px;
+      font-size: 1.05rem;
       color: #333;
       background: #f3f4f6;
-      padding: 10px 14px;
+      padding: 0.6rem 0.9rem;
       border-radius: 8px;
-      margin: 10px 0 12px;
+      margin: 0.6rem 0 0.75rem;
     }
-    .btn-order {
+    .btn-order, .btn-primary {
       display: block;
       width: 100%;
-      background: var(--wa);
       color: #fff;
       text-align: center;
-      padding: 16px 0;
-      font-size: 21px;
+      padding: 1rem 0;
+      font-size: 1.3rem;
       font-weight: bold;
       border-radius: 10px;
       text-decoration: none;
-      margin-top: 8px;
+      margin-top: 0.5rem;
+      border: none;
     }
-    .btn-order:active { filter: brightness(0.9); }
-    .message {
-      text-align: center;
-      font-size: 21px;
-      margin-top: 40px;
+    .btn-order { background: var(--wa); }
+    .btn-primary { background: var(--accent); margin-top: 1.5rem; }
+    .btn-order:active, .btn-primary:active { filter: brightness(0.9); }
+
+    /* מסך הבית עם כמה מודולים */
+    .tiles { display: grid; gap: 1rem; margin-top: 1rem; }
+    .tile {
+      display: flex; align-items: center; gap: 1rem;
+      background: #fff; border-radius: 12px; padding: 1.2rem;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+      text-decoration: none; color: var(--text);
+    }
+    .tile-icon { font-size: 2.4rem; }
+    .tile-name { font-size: 1.5rem; font-weight: bold; }
+
+    /* הגדרות */
+    .settings-section {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1rem 1.1rem 0.4rem;
+      margin-top: 1rem;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+    }
+    .settings-title { font-size: 1.4rem; margin: 0 0 0.6rem; color: var(--accent); }
+    .settings-subtitle {
+      font-size: 1.2rem; margin: 1.2rem 0 0.4rem; color: var(--accent-2);
+      border-top: 1px solid var(--line); padding-top: 0.9rem;
+    }
+    .field { margin-bottom: 1.1rem; }
+    .field-label { font-size: 1.2rem; font-weight: bold; margin-bottom: 0.25rem; }
+    .field-help { font-size: 1rem; color: var(--muted); margin-bottom: 0.45rem; }
+    .text-input {
+      width: 100%;
+      font-size: 1.3rem;
+      padding: 0.65rem 0.75rem;
+      border: 2px solid var(--line);
+      border-radius: 10px;
+      font-family: inherit;
+    }
+    .text-input:focus { outline: 3px solid #9cc1f0; border-color: var(--accent-2); }
+    .choice-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .choice-btn {
+      flex: 1 1 auto;
+      min-width: 5.5rem;
+      font-size: 1.15rem;
+      font-family: inherit;
+      padding: 0.7rem 0.8rem;
+      border-radius: 10px;
+      border: 2px solid var(--line);
+      background: #fff;
+      color: var(--text);
+    }
+    .choice-btn[aria-pressed="true"] {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: bold;
+    }
+    .choice-btn[aria-pressed="true"]::before { content: "✓ "; }
+    .stepper { display: flex; align-items: center; gap: 1rem; }
+    .stepper-btn {
+      width: 3.4rem; height: 3.4rem;
+      font-size: 1.8rem; font-weight: bold;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      background: #fff; color: var(--accent);
+    }
+    .stepper-value { font-size: 1.8rem; font-weight: bold; min-width: 2rem; text-align: center; }
+    .btn-link {
+      display: block; margin: 1.2rem auto 0;
+      background: none; border: none;
+      color: var(--muted); font-size: 1rem; text-decoration: underline;
+      font-family: inherit;
+    }
+    .save-status {
+      position: fixed; bottom: 1.2rem; left: 50%; transform: translateX(-50%);
+      background: #1a7f37; color: #fff; font-size: 1.2rem; font-weight: bold;
+      padding: 0.6rem 1.2rem; border-radius: 999px;
+      opacity: 0; transition: opacity 0.2s; pointer-events: none;
+    }
+    .save-status.show { opacity: 1; }
+    .save-status.error { background: #b42318; }
+
+    @media (max-width: 380px) {
+      .topbar-title { font-size: 1.55rem; }
+      .topbar-btn { font-size: 0.95rem; padding: 0.4rem 0.55rem; }
     }
   </style>
 </head>
 <body>
-<main>
-  <h1>🎬 הזמנת סרט לסינמטק</h1>
-  <div class="updated" id="updated"></div>
-  <div id="movies-container">
-    <p class="message">טוען סרטים מסינמטק חיפה…</p>
+  <div id="app">
+    <p class="message">טוען…</p>
   </div>
-</main>
-
-<script>
-  const USER_NAME = "אלי זיו";
-  const PHONE_NUMBER = "972525559300";
-  const STALE_AFTER_HOURS = 48;
-
-  // מקומות קבועים לפי אולם
-  const HALLS = {
-    cinematheque: { name: "סינמטק", row: "4", seats: "17-18" },
-    rappaport:    { name: "רפפורט", row: "7", seats: "24-25" }
-  };
-
-  // יוצר אלמנט עם טקסט בלבד (בלי innerHTML, כדי שתווים מוזרים בשם סרט לא ישברו את הדף)
-  function el(tag, className, text) {
-    const e = document.createElement(tag);
-    if (className) e.className = className;
-    if (text !== undefined) e.textContent = text;
-    return e;
-  }
-
-  function dayKey(d) {
-    return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
-  }
-
-  function buildMessage(s, hall) {
-    const lines = [
-      "שלום, אשמח להזמין מקום (כרטיס זוגי):",
-      "- מזמין: " + USER_NAME,
-      "- שם הסרט: " + s.title,
-      "- תאריך ושעה: " + s.weekday + ", " + s.date + ", " + s.time
-    ];
-    if (hall) {
-      lines.push("- אולם: " + hall.name);
-      lines.push("- מקומות מבוקשים: שורה " + hall.row + ", כיסאות " + hall.seats + " (או בסמוך אליהם)");
-    } else {
-      lines.push("- אולם: " + s.hall_raw);
-    }
-    lines.push("", "תודה!");
-    return lines.join("\n");
-  }
-
-  function renderCard(s) {
-    const hall = HALLS[s.hall_key] || null;
-    const card = el("div", "movie-card " + (hall ? s.hall_key : "other"));
-
-    card.appendChild(el("div", "movie-time", "⏰ " + s.time));
-    card.appendChild(el("div", "movie-title", s.title));
-
-    const hallText = hall
-      ? "🏛️ אולם: " + hall.name + " (שורה " + hall.row + ", כיסאות " + hall.seats + ")"
-      : "🏛️ אולם: " + s.hall_raw;
-    card.appendChild(el("div", "movie-info", hallText));
-
-    if (s.info) card.appendChild(el("div", "movie-meta", s.info));
-    if (s.synopsis) card.appendChild(el("div", "movie-desc", s.synopsis));
-
-    const link = el("a", "btn-order", "📲 שלח הזמנה ב-WhatsApp");
-    link.href = "https://wa.me/" + PHONE_NUMBER + "?text=" + encodeURIComponent(buildMessage(s, hall));
-    link.target = "_blank";
-    link.rel = "noopener";
-    card.appendChild(link);
-    return card;
-  }
-
-  function showMessage(container, text) {
-    container.replaceChildren(el("p", "message", text));
-  }
-
-  async function loadMovies() {
-    const container = document.getElementById("movies-container");
-    const updatedEl = document.getElementById("updated");
-
-    let data;
-    try {
-      const response = await fetch("movies.json?t=" + Date.now());
-      if (!response.ok) throw new Error("HTTP " + response.status);
-      data = await response.json();
-    } catch (err) {
-      showMessage(container, "לא הצלחתי לטעון את רשימת הסרטים. נסה שוב בעוד כמה דקות.");
-      return;
-    }
-
-    // תמיכה גם בפורמט הישן (מערך פשוט)
-    const screenings = Array.isArray(data) ? data : (data.screenings || []);
-
-    if (data.updated_at) {
-      const updated = new Date(data.updated_at);
-      updatedEl.textContent = "הרשימה עודכנה: " +
-        updated.toLocaleDateString("he-IL") + " בשעה " +
-        updated.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
-
-      if ((Date.now() - updated.getTime()) / 36e5 > STALE_AFTER_HOURS) {
-        const warn = el("div", "warning",
-          "שים לב: הרשימה לא התעדכנה כבר כמה ימים. כדאי לוודא את המועד מול הסינמטק.");
-        updatedEl.after(warn);
-      }
-    }
-
-    // מסננים הקרנות שכבר התחילו (הקובץ מתעדכן פעמיים ביום)
-    const now = Date.now();
-    const upcoming = screenings
-      .filter(s => !s.starts_at || new Date(s.starts_at).getTime() > now)
-      .sort((a, b) => (a.starts_at || "").localeCompare(b.starts_at || ""));
-
-    if (upcoming.length === 0) {
-      showMessage(container, "לא נמצאו הקרנות קרובות כרגע.");
-      return;
-    }
-
-    const today = new Date();
-    const tomorrow = new Date(today.getTime() + 864e5);
-    const todayKey = dayKey(today);
-    const tomorrowKey = dayKey(tomorrow);
-
-    container.replaceChildren();
-    let currentDay = null;
-    for (const s of upcoming) {
-      const d = s.starts_at ? new Date(s.starts_at) : null;
-      const key = d ? dayKey(d) : s.date;
-      if (key !== currentDay) {
-        currentDay = key;
-        const header = el("div", "day-header", s.weekday + ", " + s.date);
-        if (key === todayKey) header.appendChild(el("span", "tag", "היום"));
-        else if (key === tomorrowKey) header.appendChild(el("span", "tag", "מחר"));
-        container.appendChild(header);
-      }
-      container.appendChild(renderCard(s));
-    }
-  }
-
-  loadMovies();
-</script>
+  <noscript><p class="message">כדי להשתמש באפליקציה צריך לאפשר JavaScript בדפדפן.</p></noscript>
+  <!-- בכל עדכון קוד מעלים את המספר, כדי שהטלפון לא יטען גרסה ישנה מהזיכרון -->
+  <script type="module" src="core/app.js?v=3"></script>
 </body>
 </html>

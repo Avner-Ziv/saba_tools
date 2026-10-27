@@ -1,0 +1,85 @@
+{
+  "title": "הזמנת כרטיסים לסינמטק חיפה",
+  "fields": [
+    {
+      "key": "bookingName",
+      "type": "text",
+      "label": "שם המזמין בסינמטק",
+      "help": "אפשר להשאיר ריק, ואז ייכתב השם מההגדרות הכלליות",
+      "default": ""
+    },
+    {
+      "key": "tickets",
+      "type": "number",
+      "label": "כמה כרטיסים להזמין",
+      "help": "אם משנים את המספר, כדאי לעדכן גם את הכיסאות למטה",
+      "min": 1,
+      "max": 6,
+      "default": 2
+    },
+
+    { "type": "section", "label": "מקומות קבועים באולם הסינמטק" },
+    {
+      "key": "seats.cinematheque.row",
+      "type": "text",
+      "label": "שורה",
+      "help": "להשאיר ריק אם אין מקום קבוע",
+      "default": "4"
+    },
+    {
+      "key": "seats.cinematheque.seats",
+      "type": "text",
+      "label": "כיסאות",
+      "default": "17-18"
+    },
+
+    { "type": "section", "label": "מקומות קבועים באולם רפפורט" },
+    {
+      "key": "seats.rappaport.row",
+      "type": "text",
+      "label": "שורה",
+      "help": "להשאיר ריק אם אין מקום קבוע",
+      "default": "7"
+    },
+    {
+      "key": "seats.rappaport.seats",
+      "type": "text",
+      "label": "כיסאות",
+      "default": "24-25"
+    },
+
+    { "type": "section", "label": "מה להציג ברשימה" },
+    {
+      "key": "halls",
+      "type": "multichoice",
+      "label": "אולמות",
+      "options": [
+        { "value": "cinematheque", "label": "סינמטק" },
+        { "value": "rappaport", "label": "רפפורט" },
+        { "value": "other", "label": "אולמות אחרים" }
+      ],
+      "minSelected": 1,
+      "default": ["cinematheque", "rappaport", "other"]
+    },
+    {
+      "key": "earliestTime",
+      "type": "choice",
+      "label": "להציג הקרנות החל מהשעה",
+      "options": [
+        { "value": "", "label": "כל השעות" },
+        { "value": "12:00", "label": "12:00" },
+        { "value": "16:00", "label": "16:00" },
+        { "value": "17:00", "label": "17:00" },
+        { "value": "18:00", "label": "18:00" },
+        { "value": "19:00", "label": "19:00" }
+      ],
+      "default": ""
+    },
+    {
+      "key": "showSynopsis",
+      "type": "boolean",
+      "label": "להציג תקציר של כל סרט",
+      "default": true
+    }
+  ]
+}
