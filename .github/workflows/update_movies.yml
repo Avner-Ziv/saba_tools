@@ -10,13 +10,13 @@ permissions:
   contents: write
 
 concurrency:
-  group: update-movies
+  group: update-data
   cancel-in-progress: false
 
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
@@ -29,18 +29,30 @@ jobs:
       - name: Install dependencies
         run: pip install requests beautifulsoup4
 
-      - name: Fetch schedule
-        run: python fetch_movies.py
+      # צעד לכל מודול. כישלון של מודול אחד לא עוצר את האחרים.
+      # למודול חדש: מעתיקים את הצעד הזה, מחליפים id ושם קובץ, ומוסיפים אותו לבדיקה בסוף.
+      - name: "Scrape: cinema-haifa"
+        id: cinema_haifa
+        continue-on-error: true
+        run: python scrapers/cinema_haifa.py
 
       - name: Commit and push if changed
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add movies.json
+          git add data/
           if git diff --cached --quiet; then
-            echo "No changes in movies.json"
+            echo "No data changes"
             exit 0
           fi
-          git commit -m "Update movies list"
+          git commit -m "Update data"
           git pull --rebase
           git push
+
+      # אם אחד הסורקים נכשל, הריצה מסומנת כנכשלת ו-GitHub שולח מייל
+      - name: Fail if any scraper failed
+        if: steps.cinema_haifa.outcome == 'failure'
+        run: |
+          echo "At least one scraper failed. See the logs above."
+          exit 1
