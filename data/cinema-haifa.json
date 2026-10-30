@@ -1,22 +1,7 @@
 {
-  "updated_at": "2026-10-29T23:15+02:00",
+  "updated_at": "2026-10-30T12:56+02:00",
   "source": "https://www.haifacin.co.il",
   "screenings": [
-    {
-      "id": "28304",
-      "event_id": "17604",
-      "title": "כספיתון זארה",
-      "starts_at": "2026-10-30T11:00:00+02:00",
-      "date": "30.10.2026",
-      "weekday": "יום שישי",
-      "time": "11:00",
-      "hall_key": "cinematheque",
-      "hall_raw": "סינמטק חיפה",
-      "details_url": "https://www.haifacin.co.il/Event/17604/%D7%9B%D7%A1%D7%A4%D7%99%D7%AA%D7%95%D7%9F_%D7%96%D7%90%D7%A8%D7%94",
-      "buy_url": "https://www.haifacin.co.il/BuyTickets.php?event=28304",
-      "synopsis": "תומר יעקב בננו, היה קשר בחייו האזרחיים והצבאיים. איש של חיבור, של תקשורת, של מילים שמחות, אוהבות וישרות. איש של עשיה פשוטה וצנועה, אך עיקשת, אמיצה ומשמעותית.",
-      "info": ""
-    },
     {
       "id": "28211",
       "event_id": "17584",
