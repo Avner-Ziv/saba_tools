@@ -8,6 +8,7 @@
 import { el, message, setPath } from "./ui.js";
 import { LocalPrefsStore, defaultsFromSchema, mergeDeep } from "./prefs.js";
 import { renderSettings } from "./settings.js";
+import { reportUsage } from "./usage.js";
 
 const VERSION = new URL(import.meta.url).searchParams.get("v") || "";
 const withV = p => VERSION ? p + (p.includes("?") ? "&" : "?") + "v=" + VERSION : p;
@@ -23,7 +24,15 @@ const state = {
   defaults: null,     // ברירות מחדל מכל ה-schemas
   saved: {},          // רק מה שהמשתמש שינה
   prefs: null,        // defaults + saved
+  config: {},         // core/config.json
 };
+
+// השם שהמשתמש עצמו הגדיר. ברירת המחדל לא נחשבת, כדי שלא כולם יופיעו כ"אלי זיו"
+function chosenName() {
+  const s = state.saved;
+  const fromModules = Object.values(s.modules || {}).map(m => m && m.bookingName).find(Boolean);
+  return ((s.general && s.general.displayName) || fromModules || "").trim();
+}
 
 async function getJSON(path) {
   const r = await fetch(withV(path));
@@ -62,6 +71,10 @@ async function boot() {
 
   window.addEventListener("hashchange", route);
   route();
+
+  // הגדרות כלליות של האתר. קובץ חסר או שגוי לא עוצר את האפליקציה
+  try { state.config = await getJSON("core/config.json"); } catch { state.config = {}; }
+  reportUsage(state.config.usageLogUrl, chosenName());
 }
 
 function recompute() {
@@ -100,8 +113,17 @@ function frame(title, { back, settings } = {}) {
 
 // ---------- ניתוב ----------
 
+let settingsNameAtOpen = null;
+
 function route() {
   const hash = location.hash.replace(/^#/, "") || "/";
+  if (settingsNameAtOpen !== null && hash !== "/settings") {
+    const name = chosenName();
+    if (name && name !== settingsNameAtOpen) {
+      reportUsage(state.config.usageLogUrl, name, { force: true });
+    }
+    settingsNameAtOpen = null;
+  }
   window.scrollTo(0, 0);
   if (hash === "/settings") return showSettings();
   const m = hash.match(/^\/m\/([\w-]+)$/);
@@ -197,6 +219,13 @@ function showSettings() {
 
   const done = el("a", "btn-primary", "סיימתי, חזרה לרשימה");
   done.href = "#/";
+
+  // יציאה מההגדרות עם שם חדש תשלח דיווח מיד (ראו route)
+  settingsNameAtOpen = chosenName();
+  if (state.config.usageLogUrl) {
+    content.append(el("p", "privacy-note",
+      "כדי לדעת מי משתמש באפליקציה, נרשמים פעם ביום השם שהגדרת כאן, סוג המכשיר ומועד הכניסה. לא נשמרים מייל, טלפון או מיקום."));
+  }
 
   const reset = el("button", "btn-link", "החזרת כל ההגדרות לברירת המחדל");
   reset.type = "button";
