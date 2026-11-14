@@ -1,22 +1,7 @@
 {
-  "updated_at": "2026-11-14T00:02+02:00",
+  "updated_at": "2026-11-14T13:37+02:00",
   "source": "https://www.haifacin.co.il",
   "screenings": [
-    {
-      "id": "28342",
-      "event_id": "17696",
-      "title": "שני פסנתרים",
-      "starts_at": "2026-11-14T11:00:00+02:00",
-      "date": "14.11.2026",
-      "weekday": "יום שבת",
-      "time": "11:00",
-      "hall_key": "rappaport",
-      "hall_raw": "סרט ברפפורט",
-      "details_url": "https://www.haifacin.co.il/Event/17696/%D7%A9%D7%A0%D7%99_%D7%A4%D7%A1%D7%A0%D7%AA%D7%A8%D7%99%D7%9D",
-      "buy_url": "https://www.haifacin.co.il/BuyTickets.php?event=28342",
-      "synopsis": "לאחר שנים של גלות מרצון באסיה, המוזיקאי הקלאסי מתיאס ווגלר חוזר לצרפת. המנטורית הישנה שלו, אלנה, מזמינה אותו לנגן עמה בסדרה של קונצרטים באודיטוריום של ליון.",
-      "info": "90 דקות, צרפתית, כתוביות בעברית ובאנגלית."
-    },
     {
       "id": "28343",
       "event_id": "17698",
